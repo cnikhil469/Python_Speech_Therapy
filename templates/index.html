@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Therapy App</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+    <style>
+      .container {
+        text-align: center;
+      }
+      .inp-form {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto;
+      }
+      .inp-form-btn {
+        margin-top: 20px;
+      }
+      .record-section {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        margin-top: 40px;
+      }
+      .recording-btns {
+        margin: 20px auto;
+      }
+      .record-section button {
+        margin: 0px 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Speech Therapy App</h1>
+      <!-- Form to input a word and generate speech -->
+      <form method="POST">
+        <div class="inp-form">
+          <label for="word" style="margin-right: 10px">Enter a word:</label>
+          <textarea id="word" name="word" rows="2" cols="20" required>
+{{ word }}</textarea
+          >
+        </div>
+        <button type="submit" class="inp-form-btn">Generate Speech</button>
+      </form>
+
+      <div class="record-section">
+        <div class="user-record-section">
+          <!-- Form to record and save audio -->
+          <h2>Record Your Pronunciation:</h2>
+          <div class="recording-btns">
+            <button id="start-recording">Start Recording</button>
+            <button id="stop-recording" disabled>Stop Recording</button>
+            <button id="play-recording" disabled>Play Your Recording</button>
+          </div>
+          <!-- Audio element to play the recorded pronunciation -->
+          <audio id="user-audio" controls></audio>
+        </div>
+        <div>
+          <!-- Links to play the generated speech and user recording -->
+          <h2>Play Audio:</h2>
+
+          <!-- Play the latest generated speech -->
+          {% if file_name %}
+          <audio controls>
+            <source
+              src="{{ url_for('play', filename=file_name) }}"
+              type="audio/mpeg"
+            />
+            Your browser does not support the audio element.
+          </audio>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- JavaScript for recording -->
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+      const userAudio = document.getElementById("user-audio");
+      const startButton = document.getElementById("start-recording");
+      const stopButton = document.getElementById("stop-recording");
+      const playButton = document.getElementById("play-recording");
+
+      startButton.addEventListener("click", () => {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+          mediaRecorder.start();
+          startButton.disabled = true;
+          stopButton.disabled = false;
+          playButton.disabled = true;
+        });
+      });
+
+      stopButton.addEventListener("click", () => {
+        mediaRecorder.stop();
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const formData = new FormData();
+          formData.append("audio", audioBlob);
+
+          fetch("/", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.text())
+            .then(() => {
+              playButton.disabled = false;
+              startButton.disabled = false;
+              stopButton.disabled = true;
+            });
+
+          audioChunks = [];
+        };
+      });
+
+      playButton.addEventListener("click", () => {
+        fetch("/static/user_recording.wav")
+          .then((response) => response.blob())
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            userAudio.src = url;
+            userAudio.play();
+          });
+      });
+    </script>
+  </body>
+</html>
