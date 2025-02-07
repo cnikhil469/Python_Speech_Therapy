@@ -4,7 +4,8 @@ from pydub import AudioSegment
 import os
 import time
 
-app = Flask(__name__)
+# Tell Flask to look for templates in the current directory
+app = Flask(__name__, template_folder=".")
 
 recordings_folder = "static"
 os.makedirs(recordings_folder, exist_ok=True)
@@ -29,7 +30,7 @@ def index():
             word = request.form["word"]
             if word:  
                 timestamp = str(int(time.time()))
-                file_name = f"word_{timestamp}.mp3"
+                file_name = f"word.mp3"  # Always overwrite the same file
                 file_path = os.path.join(recordings_folder, file_name)
                 
                 tts = gTTS(text=word, lang='en')
