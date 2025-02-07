@@ -4,7 +4,7 @@ from pydub import AudioSegment
 import os
 import time
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder=".")
 
 recordings_folder = "static"
 os.makedirs(recordings_folder, exist_ok=True)
