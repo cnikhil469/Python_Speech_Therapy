@@ -4,7 +4,6 @@ from pydub import AudioSegment
 import os
 import time
 
-# Tell Flask to look for templates in the current directory
 app = Flask(__name__, template_folder=".")
 
 recordings_folder = "static"
@@ -55,4 +54,5 @@ def play(filename):
     return send_from_directory(recordings_folder, filename)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Use PORT provided by Render or default to 10000
+    app.run(host="0.0.0.0", port=port)
